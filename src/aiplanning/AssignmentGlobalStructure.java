@@ -18,6 +18,7 @@ import obstaclemaps.MapDisplayer;
 import obstaclemaps.ObstacleMap;
 import obstaclemaps.Path;
 
+//Bög
 public class AssignmentGlobalStructure {
 
 	public static void main(String[] args)
