@@ -1,7 +1,10 @@
 package aiplanning;
 import java.awt.Point;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.file.Paths;
+import java.util.Scanner;
+import java.util.Set;
 
 import deterministicplanning.models.Plan;
 import deterministicplanning.models.WorldModel;
@@ -15,6 +18,8 @@ import finitestatemachine.State;
 import obstaclemaps.MapDisplayer;
 import obstaclemaps.ObstacleMap;
 import obstaclemaps.Path;
+
+import static obstaclemaps.MinimalExample.width;
 
 public class AssignmentGlobalStructure {
 	
@@ -72,8 +77,27 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
-		throw new Error("To be implemented");	
+		ObstacleMap oMap;
+		int height = 0;
+		int width = 0;
+		try {
+			Scanner fileReader = new Scanner(inputFile);
+			while (fileReader.hasNext()) {
+				height++;
+				String mapLine = fileReader.nextLine();
+				for (char chr:mapLine.toCharArray()) {
+					if (width == 0) {
+						width = mapLine.length();
+					}
+					if (chr == '#') {
+
+					}
+				}
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("Map-file not found");
 		}
+	}
 
 	private static Point getEnd(File inputFile) {
 		throw new Error("To be implemented");
