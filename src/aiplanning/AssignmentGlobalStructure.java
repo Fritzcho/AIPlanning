@@ -74,41 +74,61 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
-		ObstacleMap oMap;
 		HashSet<Point> set = new HashSet<>();
-		int height = 0;
-		int width = 0;
+		int height = 0, width = 0;
 		try {
 			Scanner fileReader = new Scanner(inputFile);
 			while (fileReader.hasNext()) {
 				String mapLine = fileReader.nextLine();
-				int index = 0;
-				for (char chr:mapLine.toCharArray()) {
-					if (width == 0) {
-						width = mapLine.length();
-					}
-					if (chr == '#') {
-						set.add(new Point(index, height));
-					}
-					index++;
+				if (mapLine.length() > width) width = mapLine.length();
+				for (int x = 0; x < mapLine.toCharArray().length; x++) {
+					char chr = mapLine.toCharArray()[x];
+					if (chr == '#') set.add(new Point(x, height));
 				}
 				height++;
 			}
-			oMap = new ObstacleMap(width, height, set);
+			ObstacleMap oMap = new ObstacleMap(width, height, set);
 			return oMap;
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
-			System.exit(0);
+			return null;
+		}
+	}
+
+	private static Point getEnd(File inputFile) {
+		int y = 0;
+		try {
+			Scanner fileReader = new Scanner(inputFile);
+			while (fileReader.hasNext()) {
+				String mapLine = fileReader.nextLine();
+				for (int x = 0; x < mapLine.toCharArray().length; x++) {
+					char chr = mapLine.toCharArray()[x];
+					if (chr == '.') return (new Point(x,y));
+				}
+				y++;
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("Map-file not found");
 		}
 		return null;
 	}
 
-	private static Point getEnd(File inputFile) {
-		throw new Error("To be implemented");
-	}
-
 	private static Point getStart(File inputFile) {
-		throw new Error("To be implemented");
+		int y = 0;
+		try {
+			Scanner fileReader = new Scanner(inputFile);
+			while (fileReader.hasNext()) {
+				String mapLine = fileReader.nextLine();
+				for (int x = 0; x < mapLine.toCharArray().length; x++) {
+					char chr = mapLine.toCharArray()[x];
+					if (chr == '@') return (new Point(x,y));
+				}
+				y++;
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("Map-file not found");
+		}
+		return null;
 	}
 
 	private static WorldModel<State, Action> generateWorldModel(ObstacleMap om, Point goal) {
