@@ -87,8 +87,7 @@ public class AssignmentGlobalStructure {
 				}
 				height++;
 			}
-			ObstacleMap oMap = new ObstacleMap(width, height, set);
-			return oMap;
+			return new ObstacleMap(width, height, set);
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
 			return null;
