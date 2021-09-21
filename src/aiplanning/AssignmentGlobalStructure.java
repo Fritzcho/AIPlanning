@@ -3,8 +3,7 @@ import java.awt.Point;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import deterministicplanning.models.Plan;
 import deterministicplanning.models.WorldModel;
@@ -19,13 +18,11 @@ import obstaclemaps.MapDisplayer;
 import obstaclemaps.ObstacleMap;
 import obstaclemaps.Path;
 
-import static obstaclemaps.MinimalExample.width;
-
 public class AssignmentGlobalStructure {
-	
+
 	public static void main(String[] args)
 	{
-		/**
+		/*
 		 * First step of the processing pipeline: sensing
 		 * This step provides the decision system with the right information about the environment.
 		 * In this case, this information is: where do we start, where do we end, where are the obstacles.
@@ -43,7 +40,7 @@ public class AssignmentGlobalStructure {
 		State startState = toState(start);
 		State goalState = toState(goal);
 		
-		/**
+		/*
 		 * Second step of the processing pipeline: deciding
 		 * This step projects the pre-processed sensory input into a decision
 		 * structure  
@@ -54,7 +51,7 @@ public class AssignmentGlobalStructure {
 		
 		PlanningOutcome po = Planning.resolve(wm,startState, goalState, 50);
 		
-		/**
+		/*
 		 * Third step of the processing pipeline: action
 		 * This step turns the outcome of the decision into a concrete action:
 		 * either printing that no plan is found or which plan is found.
@@ -78,25 +75,32 @@ public class AssignmentGlobalStructure {
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
 		ObstacleMap oMap;
+		HashSet<Point> set = new HashSet<>();
 		int height = 0;
 		int width = 0;
 		try {
 			Scanner fileReader = new Scanner(inputFile);
 			while (fileReader.hasNext()) {
-				height++;
 				String mapLine = fileReader.nextLine();
+				int index = 0;
 				for (char chr:mapLine.toCharArray()) {
 					if (width == 0) {
 						width = mapLine.length();
 					}
 					if (chr == '#') {
-
+						set.add(new Point(index, height));
 					}
+					index++;
 				}
+				height++;
 			}
+			oMap = new ObstacleMap(width, height, set);
+			return oMap;
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
+			System.exit(0);
 		}
+		return null;
 	}
 
 	private static Point getEnd(File inputFile) {
@@ -108,7 +112,7 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static WorldModel<State, Action> generateWorldModel(ObstacleMap om, Point goal) {
-		/**
+		/*
 		 * This is where you describe your own word model. Checkout deterministicplanning.mains.MainForAiDeveloppers or
 		 * deterministicplanning.mains.MainMinimalItKnowledge for some examples of how to implement such function.
 		 * 
