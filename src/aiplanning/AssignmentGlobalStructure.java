@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import deterministicplanning.models.Plan;
 import deterministicplanning.models.WorldModel;
@@ -21,7 +23,7 @@ import obstaclemaps.Path;
 public class AssignmentGlobalStructure {
 
 	private enum States implements State {START, GOAL, GOOD_STEP, BAD_STEP}
-	private enum Actions implements Action {LEFT, RIGHT, FORWARD, BACK, STILL}
+	private enum Actions implements Action {LEFT, RIGHT, FORWARD, BACK, STILL, CHOOSE_DIRECTION}
 
 	public static void main(String[] args)
 	{
@@ -73,7 +75,6 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static State toState(Point start) {
-		throw new Error("To be implemented");
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
@@ -143,7 +144,31 @@ public class AssignmentGlobalStructure {
 		 * However, in the context of our exercise, you will programmatic constructs will become necessary, 
 		 * such as "for" loops and "if then else" blocks.
 		 */
-		throw new Error("To be implemented");
+		Function<States, Set<Actions>> getActionsFrom = state -> {
+			Set<Actions> possibleActions = new HashSet();
+			switch (state) {
+				case START:
+					possibleActions.add(Actions.CHOOSE_DIRECTION);
+					break;
+				case GOAL:
+					possibleActions.add(Actions.STILL);
+					break;
+				case GOOD_STEP:
+					possibleActions.add(Actions.FORWARD);
+					possibleActions.add(Actions.RIGHT);
+					possibleActions.add(Actions.LEFT);
+					break;
+				case BAD_STEP:
+					possibleActions.add(Actions.BACK);
+					break;
+			}
+			return possibleActions;
+		};
+
+		BiFunction<State, Action, Double> getRewardFor = (state, action) -> {
+			if(action.equals(Actions.STILL))return state;
+			if(state.equals(States.START))
+		};
 	}
 
 }
