@@ -20,6 +20,9 @@ import obstaclemaps.Path;
 
 public class AssignmentGlobalStructure {
 
+	private enum States implements State {START, GOAL, GOOD_STEP, BAD_STEP}
+	private enum Actions implements Action {LEFT, RIGHT, FORWARD, BACK, STILL}
+
 	public static void main(String[] args)
 	{
 		/*
@@ -83,7 +86,7 @@ public class AssignmentGlobalStructure {
 				if (mapLine.length() > width) width = mapLine.length();
 				for (int x = 0; x < mapLine.toCharArray().length; x++) {
 					char chr = mapLine.toCharArray()[x];
-					if (chr == '#') set.add(new Point(x, height));
+					if (chr == '#' || chr =='$') set.add(new Point(x, height));
 				}
 				height++;
 			}
