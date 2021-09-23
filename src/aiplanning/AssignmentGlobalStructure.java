@@ -9,7 +9,6 @@ import java.util.function.Function;
 
 import deterministicplanning.models.Plan;
 import deterministicplanning.models.WorldModel;
-import deterministicplanning.models.pedagogy.ListbasedNongenericWorldModel;
 import deterministicplanning.solvers.Planning;
 import deterministicplanning.solvers.planningoutcomes.FailedPlanningOutcome;
 import deterministicplanning.solvers.planningoutcomes.PlanningOutcome;
@@ -22,7 +21,7 @@ import obstaclemaps.Path;
 
 public class AssignmentGlobalStructure {
 
-	private enum States implements State {START, GOAL, GOOD_STEP, BAD_STEP}
+	private enum States implements State {START, GOAL, POSSIBLE_STEP, IMPOSSIBLE_STEP}
 	private enum Actions implements Action {LEFT, RIGHT, FORWARD, BACK, STILL, CHOOSE_DIRECTION}
 
 	public static void main(String[] args)
@@ -75,6 +74,7 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static State toState(Point start) {
+		throw new Error("To be implemented");
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
@@ -153,22 +153,25 @@ public class AssignmentGlobalStructure {
 				case GOAL:
 					possibleActions.add(Actions.STILL);
 					break;
-				case GOOD_STEP:
+				case POSSIBLE_STEP:
 					possibleActions.add(Actions.FORWARD);
 					possibleActions.add(Actions.RIGHT);
 					possibleActions.add(Actions.LEFT);
 					break;
-				case BAD_STEP:
+				case IMPOSSIBLE_STEP:
 					possibleActions.add(Actions.BACK);
 					break;
 			}
 			return possibleActions;
 		};
 
-		BiFunction<State, Action, Double> getRewardFor = (state, action) -> {
-			if(action.equals(Actions.STILL))return state;
-			if(state.equals(States.START))
+		BiFunction<State, Action, Double> getConsequenceOfPlaying = (state, action) -> {
+			if(action.equals(Actions.STILL)) return state;
+			if(action.equals(Actions.FORWARD) && om) {
+				return States.POSSIBLE_STEP;
+			}
 		};
-	}
 
+		return null;
+	}
 }
