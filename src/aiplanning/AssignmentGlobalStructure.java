@@ -15,14 +15,39 @@ import deterministicplanning.solvers.planningoutcomes.PlanningOutcome;
 import deterministicplanning.solvers.planningoutcomes.SuccessfulPlanningOutcome;
 import finitestatemachine.Action;
 import finitestatemachine.State;
+import finitestatemachine.impl.StringStateImpl;
 import obstaclemaps.MapDisplayer;
 import obstaclemaps.ObstacleMap;
 import obstaclemaps.Path;
 
-public class AssignmentGlobalStructure {
 
-	private enum States implements State {START, GOAL, POSSIBLE_STEP, IMPOSSIBLE_STEP}
-	private enum Actions implements Action {LEFT, RIGHT, FORWARD, BACK, STILL, CHOOSE_DIRECTION}
+public class AssignmentGlobalStructure {
+	static class validState implements State{
+
+		public validState(Point p){
+			this.point = p;
+		}
+
+		Point point;
+
+		public Point getPoint(){
+			return point;
+		}
+
+		public Set<Point> getAdjacent(){
+			Set<Point> s = new HashSet<>();
+
+			s.add(new Point((int)point.getX()+1, (int)point.getY()));
+			s.add(new Point((int)point.getX()-1, (int)point.getY()));
+			s.add(new Point((int)point.getX(), (int)point.getY()+1));
+			s.add(new Point((int)point.getX(), (int)point.getY()-1));
+
+			return s;
+		}
+
+	}
+
+	private enum Actions implements Action {NORTH, SOUTH, EAST, WEST, STILL}
 
 	public static void main(String[] args)
 	{
@@ -35,26 +60,26 @@ public class AssignmentGlobalStructure {
 		ObstacleMap om = generateObstacleMap(inputFile);
 		Point start = getStart(inputFile);
 		Point goal = getEnd(inputFile);
-		
+
 		//A bit of free visualisation, for you to better see the map!
 		MapDisplayer md = MapDisplayer.newInstance(om);
 		md.setVisible(true);
-		
-		
+
+
 		State startState = toState(start);
 		State goalState = toState(goal);
-		
+
 		/*
 		 * Second step of the processing pipeline: deciding
 		 * This step projects the pre-processed sensory input into a decision
-		 * structure  
+		 * structure
 		 */
-		
+
 		WorldModel<State,Action> wm = generateWorldModel(om, goal);
-		
-		
+
+
 		PlanningOutcome po = Planning.resolve(wm,startState, goalState, 50);
-		
+
 		/*
 		 * Third step of the processing pipeline: action
 		 * This step turns the outcome of the decision into a concrete action:
@@ -74,7 +99,7 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static State toState(Point start) {
-		throw new Error("To be implemented");
+		return new validState(start);
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
@@ -135,42 +160,47 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static WorldModel<State, Action> generateWorldModel(ObstacleMap om, Point goal) {
-		/*
-		 * This is where you describe your own word model. Checkout deterministicplanning.mains.MainForAiDeveloppers or
-		 * deterministicplanning.mains.MainMinimalItKnowledge for some examples of how to implement such function.
-		 * 
-		 * Note:
-		 * In the minimal example presented above, all states, actions, transitions, etc were "hardcoded".
-		 * However, in the context of our exercise, you will programmatic constructs will become necessary, 
-		 * such as "for" loops and "if then else" blocks.
-		 */
-		Function<States, Set<Actions>> getActionsFrom = state -> {
+		validState goalState = new validState(goal);
+		Set<State> stateList = new HashSet<>();
+
+		stateList.add(goalState);
+
+		for(Object v: stateList){
+			for(Point p : ((validState)v).getAdjacent()){
+				if(!om.getObstacles().contains(p)){
+					stateList.add(new validState(p));
+				}
+			}
+		}
+
+
+		Function<validState, Set<Actions>> getActionsFrom = state -> {
 			Set<Actions> possibleActions = new HashSet();
-			switch (state) {
-				case START:
-					possibleActions.add(Actions.CHOOSE_DIRECTION);
-					break;
-				case GOAL:
-					possibleActions.add(Actions.STILL);
-					break;
-				case POSSIBLE_STEP:
-					possibleActions.add(Actions.FORWARD);
-					possibleActions.add(Actions.RIGHT);
-					possibleActions.add(Actions.LEFT);
-					break;
-				case IMPOSSIBLE_STEP:
-					possibleActions.add(Actions.BACK);
-					break;
+			if (state.point == goal) {
+				possibleActions.add(Actions.STILL);
+			} else {
+				for(Point p : state.getAdjacent()){
+					if(!om.getObstacles().contains(p)) {
+						if (p.x == state.point.x+1)
+							possibleActions.add(Actions.EAST);
+						if (p.x == state.point.x-1)
+							possibleActions.add(Actions.WEST);
+						if (p.x == state.point.y+1)
+							possibleActions.add(Actions.NORTH);
+						if (p.x == state.point.y-1)
+							possibleActions.add(Actions.SOUTH);
+					}
+				}
 			}
 			return possibleActions;
 		};
 
 		BiFunction<State, Action, Double> getConsequenceOfPlaying = (state, action) -> {
 			if(action.equals(Actions.STILL)) return state;
-			if(action.equals(Actions.FORWARD) && om) {
-				return States.POSSIBLE_STEP;
+			if(action.equals(Actions.FORWARD) && !om.getObstacles().contains(new Point())) {
+				return validState.POSSIBLE_STEP;
 			}
-		};
+		}
 
 		return null;
 	}
