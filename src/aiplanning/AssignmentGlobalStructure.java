@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import deterministicplanning.models.FunctionBasedDeterministicWorldModel;
 import deterministicplanning.models.Plan;
 import deterministicplanning.models.WorldModel;
 import deterministicplanning.solvers.Planning;
@@ -22,7 +23,7 @@ import obstaclemaps.Path;
 
 
 public class AssignmentGlobalStructure {
-	static class validState implements State{
+	static class validState implements State {
 
 		public validState(Point p){
 			this.point = p;
@@ -66,8 +67,8 @@ public class AssignmentGlobalStructure {
 		md.setVisible(true);
 
 
-		State startState = toState(start);
-		State goalState = toState(goal);
+		validState startState = toState(start);
+		validState goalState = toState(goal);
 
 		/*
 		 * Second step of the processing pipeline: deciding
@@ -75,7 +76,7 @@ public class AssignmentGlobalStructure {
 		 * structure
 		 */
 
-		WorldModel<State,Action> wm = generateWorldModel(om, goal);
+		WorldModel<validState, Actions> wm = generateWorldModel(om, goal);
 
 
 		PlanningOutcome po = Planning.resolve(wm,startState, goalState, 50);
@@ -98,7 +99,7 @@ public class AssignmentGlobalStructure {
 		throw new Error("To be implemented");
 	}
 
-	private static State toState(Point start) {
+	private static validState toState(Point start) {
 		return new validState(start);
 	}
 
@@ -112,7 +113,7 @@ public class AssignmentGlobalStructure {
 				if (mapLine.length() > width) width = mapLine.length();
 				for (int x = 0; x < mapLine.toCharArray().length; x++) {
 					char chr = mapLine.toCharArray()[x];
-					if (chr == '#' || chr =='$') set.add(new Point(x, height));
+					if (chr == '#') set.add(new Point(x, height));
 				}
 				height++;
 			}
@@ -159,9 +160,9 @@ public class AssignmentGlobalStructure {
 		return null;
 	}
 
-	private static WorldModel<State, Action> generateWorldModel(ObstacleMap om, Point goal) {
+	private static WorldModel<validState, Actions> generateWorldModel(ObstacleMap om, Point goal) {
 		validState goalState = new validState(goal);
-		Set<State> stateList = new HashSet<>();
+		Set<validState> stateList = new HashSet<>();
 
 		stateList.add(goalState);
 
@@ -172,7 +173,6 @@ public class AssignmentGlobalStructure {
 				}
 			}
 		}
-
 
 		Function<validState, Set<Actions>> getActionsFrom = state -> {
 			Set<Actions> possibleActions = new HashSet();
@@ -185,9 +185,9 @@ public class AssignmentGlobalStructure {
 							possibleActions.add(Actions.EAST);
 						if (p.x == state.point.x-1)
 							possibleActions.add(Actions.WEST);
-						if (p.x == state.point.y+1)
+						if (p.y == state.point.y+1)
 							possibleActions.add(Actions.NORTH);
-						if (p.x == state.point.y-1)
+						if (p.y == state.point.y-1)
 							possibleActions.add(Actions.SOUTH);
 					}
 				}
@@ -195,13 +195,22 @@ public class AssignmentGlobalStructure {
 			return possibleActions;
 		};
 
-		BiFunction<State, Action, Double> getConsequenceOfPlaying = (state, action) -> {
-			if(action.equals(Actions.STILL)) return state;
-			if(action.equals(Actions.FORWARD) && !om.getObstacles().contains(new Point())) {
-				return validState.POSSIBLE_STEP;
-			}
-		}
+		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> switch (action) {
+			case EAST -> new validState(new Point((int) state.point.getX() + 1,
+					(int) state.getPoint().getY()));
+			case WEST -> new validState(new Point((int) state.point.getX() - 1,
+					(int) state.getPoint().getY()));
+			case NORTH -> new validState(new Point((int) state.point.getX(),
+					(int) state.getPoint().getY() + 1));
+			case SOUTH -> new validState(new Point((int) state.point.getX(),
+					(int) state.getPoint().getY() - 1));
+			default -> state;
+		};
 
-		return null;
+		return FunctionBasedDeterministicWorldModel.newInstance(
+				stateList,
+				getConsequenceOfPlaying,
+				(s,a)->-1d,
+				getActionsFrom);
 	}
 }
