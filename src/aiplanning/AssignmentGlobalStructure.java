@@ -24,12 +24,11 @@ import obstaclemaps.Path;
 
 public class AssignmentGlobalStructure {
 	static class validState implements State {
+		private final Point point;
 
-		public validState(Point p){
+		public validState(Point p) {
 			this.point = p;
 		}
-
-		Point point;
 
 		public Point getPoint(){
 			return point;
@@ -46,9 +45,14 @@ public class AssignmentGlobalStructure {
 			return s;
 		}
 
+		public String toString() {
+			return "State: ("+(point.x+1)+","+(point.y+1)+")";
+		}
+
 	}
 
 	private enum Actions implements Action {NORTH, SOUTH, EAST, WEST, STILL}
+	private static final Set<validState> stateList = new HashSet<>();
 
 	public static void main(String[] args)
 	{
@@ -100,7 +104,9 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static validState toState(Point start) {
-		return new validState(start);
+		validState v = new validState(start);
+		stateList.add(v);
+		return v;
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
@@ -139,7 +145,7 @@ public class AssignmentGlobalStructure {
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
 		}
-		return null;
+		throw new Error();
 	}
 
 	private static Point getStart(File inputFile) {
@@ -157,60 +163,86 @@ public class AssignmentGlobalStructure {
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
 		}
-		return null;
+		throw new Error();
 	}
 
 	private static WorldModel<validState, Actions> generateWorldModel(ObstacleMap om, Point goal) {
-		validState goalState = new validState(goal);
-		Set<validState> stateList = new HashSet<>();
+		//validState goalState = new validState(goal);
 
-		stateList.add(goalState);
+		//stateList.add(goalState);
 
-		for(Object v: stateList){
-			for(Point p : ((validState)v).getAdjacent()){
-				if(!om.getObstacles().contains(p)){
+		for (int y =0; y < om.getHeight(); y++) {
+			for  (int x = 0; x< om.getWidth(); x++){
+				final Point p = new Point(x,y);
+				if(!om.getObstacles().contains(p) && !stateList.stream().anyMatch(n ->
+						n.getPoint().equals(p))){
 					stateList.add(new validState(p));
+					System.out.println("Added state");
 				}
 			}
 		}
 
 		Function<validState, Set<Actions>> getActionsFrom = state -> {
 			Set<Actions> possibleActions = new HashSet();
-			if (state.point == goal) {
+			if (state.point.equals(goal)) {
 				possibleActions.add(Actions.STILL);
+				return possibleActions;
 			} else {
 				for(Point p : state.getAdjacent()){
 					if(!om.getObstacles().contains(p)) {
-						if (p.x == state.point.x+1)
+						if (p.x == state.point.x+1) {
 							possibleActions.add(Actions.EAST);
-						if (p.x == state.point.x-1)
+						}
+						if (p.x == state.point.x-1) {
 							possibleActions.add(Actions.WEST);
-						if (p.y == state.point.y+1)
+						}
+						if (p.y == state.point.y+1) {
 							possibleActions.add(Actions.NORTH);
-						if (p.y == state.point.y-1)
+						}
+						if (p.y == state.point.y-1) {
 							possibleActions.add(Actions.SOUTH);
+						}
 					}
 				}
 			}
 			return possibleActions;
 		};
 
-		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> switch (action) {
-			case EAST -> new validState(new Point((int) state.point.getX() + 1,
-					(int) state.getPoint().getY()));
-			case WEST -> new validState(new Point((int) state.point.getX() - 1,
-					(int) state.getPoint().getY()));
-			case NORTH -> new validState(new Point((int) state.point.getX(),
-					(int) state.getPoint().getY() + 1));
-			case SOUTH -> new validState(new Point((int) state.point.getX(),
-					(int) state.getPoint().getY() - 1));
-			default -> state;
+		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> {
+			for (validState v:stateList) {
+				System.out.println("Valid states:"+v.toString());
+			}
+			System.out.println("Current state:"+state.toString());
+			switch (action) {
+				case EAST:
+					System.out.println("Enter East on position:"+state.toString());
+					return new validState(new Point((int)state.getPoint().getX() + 1,
+						(int)state.getPoint().getY()));
+				case WEST:
+					System.out.println("Enter West on position:"+state.toString());
+					return new validState(new Point((int)state.getPoint().getX() - 1,
+						(int)state.getPoint().getY()));
+				case NORTH:
+					System.out.println("Enter North on position:"+state.toString());
+					return new validState(new Point((int)state.getPoint().getX(),
+						(int)state.getPoint().getY() - 1));
+				case SOUTH:
+					System.out.println("Enter South on position:"+state.toString());
+					return new validState(new Point((int)state.getPoint().getX(),
+						(int)state.getPoint().getY() + 1));
+				case STILL:
+					System.out.println("Enter Still on position:"+state.toString());
+					return state;
+				default: throw new Error();
+			}
 		};
+
+		BiFunction<validState, Actions, Double> getReward = (state, action) -> -1d;
 
 		return FunctionBasedDeterministicWorldModel.newInstance(
 				stateList,
 				getConsequenceOfPlaying,
-				(s,a)->-1d,
+				getReward,
 				getActionsFrom);
 	}
 }
