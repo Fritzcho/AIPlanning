@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import deterministicplanning.models.FunctionBasedDeterministicWorldModel;
 import deterministicplanning.models.Plan;
 import deterministicplanning.models.WorldModel;
 import deterministicplanning.solvers.Planning;
@@ -15,39 +16,18 @@ import deterministicplanning.solvers.planningoutcomes.PlanningOutcome;
 import deterministicplanning.solvers.planningoutcomes.SuccessfulPlanningOutcome;
 import finitestatemachine.Action;
 import finitestatemachine.State;
-import finitestatemachine.impl.StringStateImpl;
+import markov.impl.PairImpl;
 import obstaclemaps.MapDisplayer;
 import obstaclemaps.ObstacleMap;
 import obstaclemaps.Path;
 
 
 public class AssignmentGlobalStructure {
-	static class validState implements State{
 
-		public validState(Point p){
-			this.point = p;
-		}
-
-		Point point;
-
-		public Point getPoint(){
-			return point;
-		}
-
-		public Set<Point> getAdjacent(){
-			Set<Point> s = new HashSet<>();
-
-			s.add(new Point((int)point.getX()+1, (int)point.getY()));
-			s.add(new Point((int)point.getX()-1, (int)point.getY()));
-			s.add(new Point((int)point.getX(), (int)point.getY()+1));
-			s.add(new Point((int)point.getX(), (int)point.getY()-1));
-
-			return s;
-		}
-
-	}
-
-	private enum Actions implements Action {LEFT, RIGHT, FORWARD, BACK, STILL, CHOOSE_DIRECTION}
+	private enum Actions implements Action {NORTH, SOUTH, EAST, WEST, STILL}
+	private static final Set<validState> stateList = new LinkedHashSet<>();
+	private static Set<SokobanBox> boxes = new HashSet<>();
+	private static Set<Point> boxEnds = new HashSet<>();
 
 	public static void main(String[] args)
 	{
@@ -60,26 +40,31 @@ public class AssignmentGlobalStructure {
 		ObstacleMap om = generateObstacleMap(inputFile);
 		Point start = getStart(inputFile);
 		Point goal = getEnd(inputFile);
-		
+		boxes = getBoxes(inputFile);
+
+
 		//A bit of free visualisation, for you to better see the map!
 		MapDisplayer md = MapDisplayer.newInstance(om);
 		md.setVisible(true);
-		
 
-		State startState = toState(start);
-		State goalState = toState(goal);
-		
+
+		validState startState = toState(start);
+		validState goalState = toState(goal);
+
 		/*
 		 * Second step of the processing pipeline: deciding
 		 * This step projects the pre-processed sensory input into a decision
-		 * structure  
+		 * structure
 		 */
-		
-		WorldModel<State,Action> wm = generateWorldModel(om, goal);
-		
-		
+		WorldModel<validState, Actions> wm;
+		if (boxes.isEmpty()) {
+			wm = generateWorldModel(om, goal);
+		} else {
+			wm = generateWorldModel2(om, boxEnds);
+		}
+
 		PlanningOutcome po = Planning.resolve(wm,startState, goalState, 50);
-		
+
 		/*
 		 * Third step of the processing pipeline: action
 		 * This step turns the outcome of the decision into a concrete action:
@@ -87,19 +72,32 @@ public class AssignmentGlobalStructure {
 		 */
 		if(po instanceof FailedPlanningOutcome) { System.out.println("No plan could be found."); return;}
 		else {
-			Plan<State, Action> plan = ((SuccessfulPlanningOutcome)po).getPlan();
+			Plan<validState, Actions> plan = ((SuccessfulPlanningOutcome)po).getPlan();
 			Path p = planToPath(plan);
 			md.setPath(p);
 			System.out.println("Path found:"+p);
 		}
 	}
 
-	private static Path planToPath(Plan<State, Action> plan) {
-		throw new Error("To be implemented");
+	private static Path planToPath(Plan<validState, Actions> plan) {
+		List<PairImpl<validState, Actions>> pairs = plan.getStateActionPairs();
+		List<Path.Direction> directions = new ArrayList<>();
+		for (PairImpl<validState,Actions> p: plan.getStateActionPairs()) {
+			directions.add(Path.Direction.valueOf(p.getRight().toString()));
+		}
+		return new Path(pairs.get(0).getLeft().getPoint(), directions);
 	}
 
-	private static State toState(Point start) {
-		return new validState(start);
+	private static validState toState(Point start) {
+		validState v = new validState(start);
+		if(!boxes.isEmpty()){
+			for(SokobanBox b : boxes){
+				v.addBox(b.getPoint());
+			}
+		}
+
+		stateList.add(v);
+		return v;
 	}
 
 	private static ObstacleMap generateObstacleMap(File inputFile) {
@@ -112,7 +110,7 @@ public class AssignmentGlobalStructure {
 				if (mapLine.length() > width) width = mapLine.length();
 				for (int x = 0; x < mapLine.toCharArray().length; x++) {
 					char chr = mapLine.toCharArray()[x];
-					if (chr == '#' || chr =='$') set.add(new Point(x, height));
+					if (chr == '#') set.add(new Point(x, height));
 				}
 				height++;
 			}
@@ -138,7 +136,7 @@ public class AssignmentGlobalStructure {
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
 		}
-		return null;
+		throw new Error();
 	}
 
 	private static Point getStart(File inputFile) {
@@ -156,53 +154,181 @@ public class AssignmentGlobalStructure {
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
 		}
-		return null;
+		throw new Error();
 	}
 
-	private static WorldModel<State, Action> generateWorldModel(ObstacleMap om, Point goal) {
+	private static Set<SokobanBox> getBoxes(File inputFile) {
+		HashSet<SokobanBox> set = new HashSet<>();
+		int y = 0;
+		try {
+			Scanner fileReader = new Scanner(inputFile);
+			while (fileReader.hasNext()) {
+				String mapLine = fileReader.nextLine();
+				for (int x = 0; x < mapLine.toCharArray().length; x++) {
+					char chr = mapLine.toCharArray()[x];
+					if (chr == '$') set.add(new SokobanBox(new Point(x,y)));
+				}
+				y++;
+			}
+			return set;
+		} catch (FileNotFoundException e) {
+			System.out.println("Map-file not found");
+			return null;
+		}
+	}
+
+	private static void getBoxEnds(File inputFile) {
+		int y = 0;
+		try {
+			Scanner fileReader = new Scanner(inputFile);
+			while (fileReader.hasNext()) {
+				String mapLine = fileReader.nextLine();
+				for (int x = 0; x < mapLine.toCharArray().length; x++) {
+					char chr = mapLine.toCharArray()[x];
+					if (chr == '.' || chr == '*') boxEnds.add(new Point(x,y));
+				}
+				y++;
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("Map-file not found");
+			throw new Error();
+		}
+	}
+
+	private static WorldModel<validState, Actions> generateWorldModel(ObstacleMap om, Point goal) {
 		validState goalState = new validState(goal);
-		Set<State> stateList = new HashSet<>();
+		Stack<validState> potentialStates = new Stack<>();
 
-		stateList.add(goalState);
+		potentialStates.add(goalState);
 
-		for(Object v: stateList){
-			for(Point p : ((validState)v).getAdjacent()){
-				if(!om.getObstacles().contains(p)){
-					stateList.add(new validState(p));
+		for(validState v;!potentialStates.isEmpty();){
+			v = potentialStates.pop();
+			stateList.add(v);
+			for(Point p : (v).getAdjacent()){
+				validState fresh = new validState(p);
+				if(!om.getObstacles().contains(p) && stateList.stream().noneMatch(n-> n.getPoint().equals(p))){
+					potentialStates.push(fresh);
 				}
 			}
 		}
 
-
-		Function<State, Set<Actions>> getActionsFrom = state -> {
+		Function<validState, Set<Actions>> getActionsFrom = state -> {
 			Set<Actions> possibleActions = new HashSet();
-			switch (state) {
-				case START:
-					possibleActions.add(Actions.CHOOSE_DIRECTION);
-					break;
-				case GOAL:
-					possibleActions.add(Actions.STILL);
-					break;
-				case POSSIBLE_STEP:
-					possibleActions.add(Actions.FORWARD);
-					possibleActions.add(Actions.RIGHT);
-					possibleActions.add(Actions.LEFT);
-					break;
-				case IMPOSSIBLE_STEP:
-					possibleActions.add(Actions.BACK);
-					break;
+			if (state.getPoint().equals(goal)) {
+				possibleActions.add(Actions.STILL);
+				return possibleActions;
+			} else {
+				for(Point p : state.getAdjacent()){
+					if(!om.getObstacles().contains(p)) {
+						if (p.x != state.getPoint().x)
+							possibleActions.add(p.x == state.getPoint().x+1? Actions.EAST: Actions.WEST);
+						if (p.y != state.getPoint().y)
+							possibleActions.add(p.y == state.getPoint().y+1? Actions.SOUTH: Actions.NORTH);
+					}
+				}
 			}
 			return possibleActions;
-
 		};
 
-		BiFunction<State, Action, Double> getConsequenceOfPlaying = (state, action) -> {
-			if(action.equals(Actions.STILL)) return state;
-			if(action.equals(Actions.FORWARD) && !om.getObstacles().contains(new Point())) {
-				return validState.POSSIBLE_STEP;
+
+		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> switch (action) {
+			case EAST -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x+1, state.getPoint().y)))
+					.findFirst()
+					.orElseThrow();
+			case WEST -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x-1, state.getPoint().y)))
+					.findFirst()
+					.orElseThrow();
+			case NORTH -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y-1)))
+					.findFirst()
+					.orElseThrow();
+			case SOUTH -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y+1)))
+					.findFirst()
+					.orElseThrow();
+			case STILL -> state;
+		};
+
+		BiFunction<validState, Actions, Double> getReward = (state, action) -> (state.getPoint().equals(goal) ? 0 : -1d);
+
+		return FunctionBasedDeterministicWorldModel.newInstance(
+				stateList,
+				getConsequenceOfPlaying,
+				getReward,
+				getActionsFrom);
+	}
+
+	private static WorldModel<validState, Actions> generateWorldModel2(ObstacleMap om, Set<Point> goalPoints) {
+		Stack<validState> potentialStates = new Stack<>();
+		for (Point gp : goalPoints){
+			Point playerPos;
+			validState vs = new validState(gp);
+
+			for(Point pAdjacent : vs.getAdjacent()){
+				if(!om.getObstacles().contains(pAdjacent) && goalPoints.stream().noneMatch(p -> p.equals(pAdjacent))){
+
+				}
 			}
 		}
 
-		return null;
+			for(validState v;!potentialStates.isEmpty();){
+				v = potentialStates.pop();
+				stateList.add(v);
+				for(Point p : (v).getAdjacent()){
+					validState fresh = new validState(p);
+					if(!om.getObstacles().contains(p) && stateList.stream().noneMatch(n-> n.getPoint().equals(p))){
+						potentialStates.push(fresh);
+					}
+				}
+			}
+
+		Function<validState, Set<Actions>> getActionsFrom = state -> {
+			Set<Actions> possibleActions = new HashSet();
+			if (state.getPoint().equals(goal)) {
+				possibleActions.add(Actions.STILL);
+				return possibleActions;
+			} else {
+				for(Point p : state.getAdjacent()){
+					if(!om.getObstacles().contains(p)) {
+						if (p.x != state.getPoint().x)
+							possibleActions.add(p.x == state.getPoint().x+1? Actions.EAST: Actions.WEST);
+						if (p.y != state.getPoint().y)
+							possibleActions.add(p.y == state.getPoint().y+1? Actions.SOUTH: Actions.NORTH);
+					}
+				}
+			}
+			return possibleActions;
+		};
+
+
+		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> switch (action) {
+			case EAST -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x+1, state.getPoint().y)))
+					.findFirst()
+					.orElseThrow();
+			case WEST -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x-1, state.getPoint().y)))
+					.findFirst()
+					.orElseThrow();
+			case NORTH -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y-1)))
+					.findFirst()
+					.orElseThrow();
+			case SOUTH -> stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y+1)))
+					.findFirst()
+					.orElseThrow();
+			case STILL -> state;
+		};
+
+		BiFunction<validState, Actions, Double> getReward = (state, action) -> (state.getPoint().equals(goal) ? 0 : -1d);
+
+		return FunctionBasedDeterministicWorldModel.newInstance(
+				stateList,
+				getConsequenceOfPlaying,
+				getReward,
+				getActionsFrom);
 	}
 }
