@@ -40,7 +40,8 @@ public class AssignmentGlobalStructure {
 		ObstacleMap om = generateObstacleMap(inputFile);
 		Point start = getStart(inputFile);
 		Point goal = getEnd(inputFile);
-		boxes = getBoxes(inputFile);
+		getBoxes(inputFile);
+		getBoxEnds(inputFile);
 
 
 		//A bit of free visualisation, for you to better see the map!
@@ -60,7 +61,7 @@ public class AssignmentGlobalStructure {
 		if (boxes.isEmpty()) {
 			wm = generateWorldModel(om, goal);
 		} else {
-			wm = generateWorldModel2(om, );
+			wm = generateWorldModel2(om);
 		}
 
 
@@ -152,7 +153,7 @@ public class AssignmentGlobalStructure {
 		throw new Error();
 	}
 
-	private static Set<SokobanBox> getBoxes(File inputFile) {
+	private static void getBoxes(File inputFile) {
 		HashSet<SokobanBox> set = new HashSet<>();
 		int y = 0;
 		try {
@@ -161,14 +162,12 @@ public class AssignmentGlobalStructure {
 				String mapLine = fileReader.nextLine();
 				for (int x = 0; x < mapLine.toCharArray().length; x++) {
 					char chr = mapLine.toCharArray()[x];
-					if (chr == '$') set.add(new SokobanBox(new Point(x,y)));
+					if (chr == '$') boxes.add(new SokobanBox(new Point(x,y)));
 				}
 				y++;
 			}
-			return set;
 		} catch (FileNotFoundException e) {
 			System.out.println("Map-file not found");
-			return null;
 		}
 	}
 
@@ -257,7 +256,9 @@ public class AssignmentGlobalStructure {
 
 	private static WorldModel<validState, Actions> generateWorldModel2(ObstacleMap om) {
 		Stack<validState> potentialStates = new Stack<>();
-		for (validState v: boxes)
+		for (Point g: ) {
+			potentialStates.push(g);
+		}
 
 		for(validState v;!potentialStates.isEmpty();){
 			v = potentialStates.pop();

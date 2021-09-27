@@ -8,6 +8,7 @@ import java.util.Set;
 
 class validState implements State {
     private final Point point;
+    private Set<SokobanBox> boxes= new HashSet<>();
 
     public validState(Point p) {
         this.point = p;
@@ -15,6 +16,14 @@ class validState implements State {
 
     public Point getPoint(){
         return point;
+    }
+
+    public void addBox(SokobanBox box) {
+        boxes.add(box);
+    }
+
+    public Set<SokobanBox> getBoxes() {
+        return boxes;
     }
 
     public Set<Point> getAdjacent(){
