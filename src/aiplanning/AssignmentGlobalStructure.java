@@ -90,12 +90,6 @@ public class AssignmentGlobalStructure {
 
 	private static validState toState(Point start) {
 		validState v = new validState(start);
-		if(!boxes.isEmpty()){
-			for(SokobanBox b : boxes){
-				v.addBox(b.getPoint());
-			}
-		}
-
 		stateList.add(v);
 		return v;
 	}
@@ -260,15 +254,18 @@ public class AssignmentGlobalStructure {
 				getActionsFrom);
 	}
 
+
+
 	private static WorldModel<validState, Actions> generateWorldModel2(ObstacleMap om, Set<Point> goalPoints) {
 		Stack<validState> potentialStates = new Stack<>();
 		for (Point gp : goalPoints){
-			Point playerPos;
-			validState vs = new validState(gp);
-
-			for(Point pAdjacent : vs.getAdjacent()){
+			for(Point pAdjacent : new SokobanBox(gp).getAdjacent()){
 				if(!om.getObstacles().contains(pAdjacent) && goalPoints.stream().noneMatch(p -> p.equals(pAdjacent))){
-
+					validState newValidState = new validState(pAdjacent);
+					for(Point gp2: goalPoints){
+						newValidState.addBox(new SokobanBox(gp2));
+					}
+					potentialStates.add(newValidState);
 				}
 			}
 		}
@@ -276,9 +273,23 @@ public class AssignmentGlobalStructure {
 			for(validState v;!potentialStates.isEmpty();){
 				v = potentialStates.pop();
 				stateList.add(v);
+				for(SokobanBox box : v.getBoxes()){
+					for(Point p : box.getAdjacent()){
+						if(!om.getObstacles().contains(p) && v.getBoxes().stream().noneMatch(b -> b.getPoint().equals(p))
+						&& p != v.getPoint()){
+							validState fresh = v;
+							fresh.getBoxes().stream().filter(n -> n.getPoint().equals(box.getPoint()))
+									.findFirst()
+									.orElseThrow()
+									.setPoint(p);
+							potentialStates.push(fresh);
+						}
+					}
+				}
+
 				for(Point p : (v).getAdjacent()){
-					validState fresh = new validState(p);
-					if(!om.getObstacles().contains(p) && stateList.stream().noneMatch(n-> n.getPoint().equals(p))){
+					validState fresh = v;
+					if(!om.getObstacles().contains(p) && fresh.getBoxes().stream().noneMatch(b-> b.getPoint().equals(p))){
 						potentialStates.push(fresh);
 					}
 				}

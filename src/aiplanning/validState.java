@@ -19,8 +19,8 @@ class validState implements State {
         return point;
     }
 
-    public void addBox(Point p){
-        boxes.add(new SokobanBox(p));
+    public void addBox(SokobanBox b){
+        boxes.add(b);
     }
 
     public Set<SokobanBox> getBoxes(){
