@@ -27,6 +27,7 @@ public class AssignmentGlobalStructure {
 	private enum Actions implements Action {NORTH, SOUTH, EAST, WEST, STILL}
 	private static final Set<validState> stateList = new LinkedHashSet<>();
 	private static Set<SokobanBox> boxes = new HashSet<>();
+	private static Set<Point> boxEnds = new HashSet<>();
 
 	public static void main(String[] args)
 	{
@@ -171,8 +172,7 @@ public class AssignmentGlobalStructure {
 		}
 	}
 
-	private static HashSet<Point> getBoxEnds(File inputFile) {
-		HashSet<Point> set = new HashSet<>();
+	private static void getBoxEnds(File inputFile) {
  		int y = 0;
 		try {
 			Scanner fileReader = new Scanner(inputFile);
@@ -180,7 +180,7 @@ public class AssignmentGlobalStructure {
 				String mapLine = fileReader.nextLine();
 				for (int x = 0; x < mapLine.toCharArray().length; x++) {
 					char chr = mapLine.toCharArray()[x];
-					if (chr == '.' || chr == '*') set.add(new Point(x,y));
+					if (chr == '.' || chr == '*') boxEnds.add(new Point(x,y));
 				}
 				y++;
 			}
@@ -188,7 +188,6 @@ public class AssignmentGlobalStructure {
 			System.out.println("Map-file not found");
 			throw new Error();
 		}
-		return set;
 	}
 
 	private static WorldModel<validState, Actions> generateWorldModel(ObstacleMap om, Point goal) {
