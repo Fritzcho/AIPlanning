@@ -47,7 +47,8 @@ public class SokobanBox {
         return s;
     }
 
+
     public String toString() {
-        return "State: ("+(point.x+1)+","+(point.y+1)+")";
+        return "State: ("+(point.x)+","+(point.y)+")";
     }
 }

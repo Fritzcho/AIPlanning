@@ -15,9 +15,15 @@ class validState implements State {
         this.point = p;
     }
 
+    public validState(Point p, Set<SokobanBox> list) {
+        this.point = p;
+        this.boxes = list;
+    }
+
     public Point getPoint(){
         return point;
     }
+
 
     public void addBox(SokobanBox b){
         boxes.add(b);
@@ -25,6 +31,15 @@ class validState implements State {
 
     public Set<SokobanBox> getBoxes(){
         return boxes;
+    }
+
+    public Boolean hasBox(Point p){
+        for(SokobanBox box : boxes){
+            if (box.getPoint().equals(p)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public Set<Point> getAdjacent(){
