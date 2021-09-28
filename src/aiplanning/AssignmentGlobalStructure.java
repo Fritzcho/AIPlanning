@@ -197,15 +197,13 @@ public class AssignmentGlobalStructure {
 		Set<Actions> possibleActions = new HashSet<>();
 		for(Point p : state.getAdjacent()) {
 			if(!om.getObstacles().contains(p)) {
-				if (state.hasBox(p)) {
-					Point backP = new Point((int)(p.getX() + (state.getPoint().getX() - p.getX())), (int)(p.getY() + (state.getPoint().getY() - p.getY())));
-					if (!state.hasBox(backP) && !om.getObstacles().contains(backP)){
-					}
-				} else {
+				if (!state.hasBox(p)) {
 					if (p.x != state.getPoint().x)
 						possibleActions.add(p.x == state.getPoint().x + 1 ? Actions.EAST : Actions.WEST);
 					if (p.y != state.getPoint().y)
 						possibleActions.add(p.y == state.getPoint().y + 1 ? Actions.SOUTH : Actions.NORTH);
+				} else {
+					
 				}
 			}
 		}
@@ -260,20 +258,24 @@ public class AssignmentGlobalStructure {
 			Set<Actions> possibleActions = new HashSet<>();
 			for(Point p : state.getAdjacent()) {
 				if(!om.getObstacles().contains(p)) {
-					if (state.hasBox(p)) {
-						Point backP = new Point((int)(p.getX() + (state.getPoint().getX() - p.getX())), (int)(p.getY() + (state.getPoint().getY() - p.getY())));
-						if (!state.hasBox(backP) && !om.getObstacles().contains(backP)){
-							if (p.x != state.getPoint().x)
-								possibleActions.add(p.x == state.getPoint().x + 1 ? Actions.EAST : Actions.WEST);
-							if (p.y != state.getPoint().y)
-								possibleActions.add(p.y == state.getPoint().y + 1 ? Actions.SOUTH : Actions.NORTH);
-						}
-						//possibleActions = getActions( new validState(p));
-					} else {
+					if (!state.hasBox(p)) {
 						if (p.x != state.getPoint().x)
 							possibleActions.add(p.x == state.getPoint().x + 1 ? Actions.EAST : Actions.WEST);
 						if (p.y != state.getPoint().y)
 							possibleActions.add(p.y == state.getPoint().y + 1 ? Actions.SOUTH : Actions.NORTH);
+					} else {
+						for (Point backP: state.getAdjacent()) {
+							if (!om.getObstacles().contains(backP) && !state.hasBox(backP)) {
+								if (backP.x == p.x+1 || !possibleActions.contains(Actions.EAST))
+									possibleActions.add(Actions.EAST);
+								if (backP.x == p.x-1 || !possibleActions.contains(Actions.WEST))
+									possibleActions.add(Actions.WEST);
+								if (backP.y == p.y-1 || !possibleActions.contains(Actions.NORTH))
+									possibleActions.add(Actions.NORTH);
+								if (backP.y == p.y+1 || !possibleActions.contains(Actions.SOUTH))
+									possibleActions.add(Actions.SOUTH);
+							}
+						}
 					}
 				}
 			}

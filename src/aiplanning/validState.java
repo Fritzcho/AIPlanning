@@ -4,8 +4,7 @@ package aiplanning;
 import finitestatemachine.State;
 
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 class validState implements State {
     private final Point point;
@@ -31,6 +30,13 @@ class validState implements State {
 
     public Set<SokobanBox> getBoxes(){
         return boxes;
+    }
+
+    public SokobanBox getBox(Point p) {
+        return boxes.stream().filter(n ->
+                        n.getPoint().equals(p))
+                        .findFirst()
+                        .orElse(null);
     }
 
     public Boolean hasBox(Point p){
