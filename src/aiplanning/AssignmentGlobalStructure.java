@@ -26,8 +26,8 @@ public class AssignmentGlobalStructure {
 
 	private enum Actions implements Action {NORTH, SOUTH, EAST, WEST, STILL}
 	private static final Set<validState> stateList = new LinkedHashSet<>();
-	private static HashSet<SokobanBox> boxes = new HashSet<>();
-	private static HashSet<Point> boxEnds = new HashSet<>();
+	private static HashSet<SokobanBox> boxes = new LinkedHashSet<>();
+	private static HashSet<Point> boxEnds = new LinkedHashSet<>();
 
 	public static void main(String[] args)
 	{
@@ -161,7 +161,7 @@ public class AssignmentGlobalStructure {
 				String mapLine = fileReader.nextLine();
 				for (int x = 0; x < mapLine.toCharArray().length; x++) {
 					char chr = mapLine.toCharArray()[x];
-					if (chr == '$') set.add(new SokobanBox(new Point(x,y)));
+					if (chr == '$' || chr == '*') set.add(new SokobanBox(new Point(x,y)));
 				}
 				y++;
 			}
@@ -182,7 +182,6 @@ public class AssignmentGlobalStructure {
 					char chr = mapLine.toCharArray()[x];
 					if (chr == '.' || chr == '*'){
 						boxEnds.add(new Point(x,y));
-						System.out.println(x + "'" + y);
 					}
 
 				}
@@ -192,23 +191,6 @@ public class AssignmentGlobalStructure {
 			System.out.println("Map-file not found");
 			throw new Error();
 		}
-	}
-
-	private static Set<Actions> getActions(ObstacleMap om, validState state) {
-		Set<Actions> possibleActions = new HashSet<>();
-		for(Point p : state.getAdjacent()) {
-			if(!om.getObstacles().contains(p)) {
-				if (!state.hasBox(p)) {
-					if (p.x != state.getPoint().x)
-						possibleActions.add(p.x == state.getPoint().x + 1 ? Actions.EAST : Actions.WEST);
-					if (p.y != state.getPoint().y)
-						possibleActions.add(p.y == state.getPoint().y + 1 ? Actions.SOUTH : Actions.NORTH);
-				} else {
-					
-				}
-			}
-		}
-		return possibleActions;
 	}
 
 	private static WorldModel<validState, Actions> generateWorldModel2(ObstacleMap om, Set<Point> goalPoints) {
@@ -265,18 +247,22 @@ public class AssignmentGlobalStructure {
 						if (p.y != state.getPoint().y)
 							possibleActions.add(p.y == state.getPoint().y + 1 ? Actions.SOUTH : Actions.NORTH);
 					} else {
-						for (Point backP: state.getAdjacent()) {
-							if (!om.getObstacles().contains(backP) && !state.hasBox(backP)) {
-								if (backP.x == p.x+1 || !possibleActions.contains(Actions.EAST))
-									possibleActions.add(Actions.EAST);
-								if (backP.x == p.x-1 || !possibleActions.contains(Actions.WEST))
-									possibleActions.add(Actions.WEST);
-								if (backP.y == p.y-1 || !possibleActions.contains(Actions.NORTH))
-									possibleActions.add(Actions.NORTH);
-								if (backP.y == p.y+1 || !possibleActions.contains(Actions.SOUTH))
-									possibleActions.add(Actions.SOUTH);
-							}
-						}
+						if (state.getBox(p).getPoint().equals(state.getEast()) &&
+								!state.hasBox(state.getBox(p).getEast()) &&
+								!om.getObstacles().contains(state.getBox(p).getEast()))
+							possibleActions.add(Actions.EAST);
+						if (state.getBox(p).getPoint().equals(state.getWest()) &&
+								!state.hasBox(state.getBox(p).getWest()) &&
+								!om.getObstacles().contains(state.getBox(p).getWest()))
+							possibleActions.add(Actions.WEST);
+						if (state.getBox(p).getPoint().equals(state.getSouth()) &&
+								!state.hasBox(state.getBox(p).getSouth()) &&
+								!om.getObstacles().contains(state.getBox(p).getSouth()))
+							possibleActions.add(Actions.SOUTH);
+						if (state.getBox(p).getPoint().equals(state.getNorth()) &&
+								!state.hasBox(state.getBox(p).getNorth()) &&
+								!om.getObstacles().contains(state.getBox(p).getNorth()))
+							possibleActions.add(Actions.NORTH);
 					}
 				}
 			}
@@ -284,24 +270,42 @@ public class AssignmentGlobalStructure {
 		};
 
 
-		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> switch (action) {
-			case EAST -> stateList.stream().filter(n ->
-							n.getPoint().equals(new Point(state.getPoint().x+1, state.getPoint().y)))
-					.findFirst()
-					.orElseThrow();
-			case WEST -> stateList.stream().filter(n ->
-							n.getPoint().equals(new Point(state.getPoint().x-1, state.getPoint().y)))
-					.findFirst()
-					.orElseThrow();
-			case NORTH -> stateList.stream().filter(n ->
-							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y-1)))
-					.findFirst()
-					.orElseThrow();
-			case SOUTH -> stateList.stream().filter(n ->
-							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y+1)))
-					.findFirst()
-					.orElseThrow();
-			case STILL -> state;
+		BiFunction<validState, Actions, validState> getConsequenceOfPlaying = (state, action) -> {
+			switch (action) {
+				case EAST: {
+					if (state.hasBox(state.getEast())) {
+						state.getBox(state.getEast()).moveEast();
+					}
+					return stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x + 1, state.getPoint().y)))
+							.findFirst().orElseThrow();
+				}
+				case WEST: {
+					if (state.hasBox(state.getWest())) {
+						state.getBox(state.getWest()).moveWest();
+					}
+					return stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x - 1, state.getPoint().y)))
+							.findFirst().orElseThrow();
+				}
+				case NORTH: {
+					if (state.hasBox(state.getNorth())) {
+						state.getBox(state.getNorth()).moveNorth();
+					}
+					return stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y - 1)))
+							.findFirst().orElseThrow();
+				}
+				case SOUTH: {
+					if (state.hasBox(state.getSouth())) {
+						state.getBox(state.getSouth()).moveSouth();
+					}
+					return stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x, state.getPoint().y + 1)))
+							.findFirst().orElseThrow();
+				}
+				default: return state;
+			}
 		};
 
 		BiFunction<validState, Actions, Double> getReward = (state, action) -> {
@@ -348,6 +352,7 @@ public class AssignmentGlobalStructure {
 							possibleActions.add(p.x == state.getPoint().x+1? Actions.EAST: Actions.WEST);
 						if (p.y != state.getPoint().y)
 							possibleActions.add(p.y == state.getPoint().y+1? Actions.SOUTH: Actions.NORTH);
+
 					}
 				}
 			}

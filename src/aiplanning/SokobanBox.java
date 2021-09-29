@@ -20,20 +20,28 @@ public class SokobanBox {
         this.point = p;
     }
 
-    public void moveEast() {
-        this.point = new Point(point.x+1, point.y);
+    public void moveEast() { this.point = new Point(point.x+1, point.y); }
+
+    public void moveWest() { this.point = new Point(point.x-1, point.y); }
+
+    public void moveNorth() { this.point = new Point(point.x, point.y-1); }
+
+    public void moveSouth() { this.point = new Point(point.x, point.y+1); }
+
+    public Point getEast() {
+        return new Point(point.x+1, point.y);
     }
 
-    public void moveWest() {
-        this.point = new Point(point.x-1, point.y);
+    public Point getWest() {
+        return new Point(point.x-1, point.y);
     }
 
-    public void moveNorth() {
-        this.point = new Point(point.x, point.y-1);
+    public Point getSouth() {
+        return new Point(point.x, point.y+1);
     }
 
-    public void moveSouth() {
-        this.point = new Point(point.x, point.y+1);
+    public Point getNorth() {
+        return new Point(point.x, point.y-1);
     }
 
     public Set<Point> getAdjacent(){
