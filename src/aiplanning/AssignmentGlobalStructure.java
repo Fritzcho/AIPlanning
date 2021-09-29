@@ -60,6 +60,7 @@ public class AssignmentGlobalStructure {
 		WorldModel<validState, Actions> wm;
 		if (boxes.isEmpty()) {
 			wm = generateWorldModel(om, goal);
+
 		} else {
 			wm = generateWorldModel2(om, boxEnds);
 		}
