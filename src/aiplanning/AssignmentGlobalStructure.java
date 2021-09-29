@@ -194,6 +194,7 @@ public class AssignmentGlobalStructure {
 	}
 
 	private static WorldModel<validState, Actions> generateWorldModel2(ObstacleMap om, Set<Point> goalPoints) {
+		HashMap<Set<SokobanBox>, Point> states = new HashMap<>();
 		Stack<validState> potentialStates = new Stack<>();
 
 		for (Point gp : goalPoints){ //Initialize all potential final states
@@ -203,6 +204,7 @@ public class AssignmentGlobalStructure {
 					for(Point gp2: goalPoints){
 						fresh.addBox(new SokobanBox(gp2));
 					}
+					states.put(fresh.boxes, fresh.getPoint());
 					potentialStates.push(fresh);
 				}
 			}
@@ -214,28 +216,34 @@ public class AssignmentGlobalStructure {
 			System.out.println(stateList.size() + ": " + v.getPoint().toString() + ", " + v.getBoxes());
 			for(Point p : (v).getAdjacent()){ //Search for next potential states for player
 				validState fresh = new validState(p, new HashSet<>(v.getBoxes()));
-				if(!om.getObstacles().contains(p) && fresh.getBoxes().stream().noneMatch(b-> b.getPoint().equals(p)) &&
-						stateList.stream().noneMatch(n -> n.getPoint().equals(p) && n.getBoxes().equals(fresh.getBoxes()))){
+				if(!om.getObstacles().contains(p) && fresh.getBoxes().stream().noneMatch(b-> b.getPoint().equals(p))){
+					states.put(fresh.boxes, fresh.getPoint());
 					potentialStates.push(fresh);
 				}
 			}
 
 			for(SokobanBox box : v.getBoxes()){//Search for next potential states for each box
 				for(Point p : box.getAdjacent()){
-					if(!om.getObstacles().contains(p) && v.getBoxes().stream().noneMatch(b -> b.getPoint().equals(p)) && !p.equals(v.getPoint())){
-						validState fresh = new validState(p, new HashSet<>(v.getBoxes()));
-						fresh.getBoxes().stream().filter(n -> n.getPoint().equals(box.getPoint()))
+					if(!om.getObstacles().contains(p) && !v.hasBox(p) && !p.equals(v.getPoint())){
+						validState fresh = new validState(v.getPoint(), new HashSet<>(v.getBoxes()));
+						fresh.boxes.stream().filter(n -> n.getPoint().equals(box.getPoint()))
 								.findFirst()
 								.orElseThrow()
 								.setPoint(p);
-						if(stateList.stream().noneMatch(n -> n.getPoint().equals(p) &&
-								n.getBoxes().equals(fresh.getBoxes()))){
+
+						if(states.get(fresh.getPoint()).stream().noneMatch(l -> l.equals(fresh.boxes))){
+							states.put(fresh.getPoint(), fresh.boxes);
 							potentialStates.push(fresh);
 						}
 					}
 				}
 			}
 		}
+
+		for(validState v:stateList){
+			System.out.println(v.getPoint() + ", " + v.boxes);
+		}
+		System.out.println(stateList.size());
 
 		Function<validState, Set<Actions>> getActionsFrom = state -> {
 			Set<Actions> possibleActions = new HashSet<>();
@@ -275,10 +283,16 @@ public class AssignmentGlobalStructure {
 				case EAST: {
 					if (state.hasBox(state.getEast())) {
 						state.getBox(state.getEast()).moveEast();
-					}
-					return stateList.stream().filter(n ->
-							n.getPoint().equals(new Point(state.getPoint().x + 1, state.getPoint().y)))
+						return stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x + 1, state.getPoint().y))
+							&& n.getBoxes().equals(state.getBoxes()))
 							.findFirst().orElseThrow();
+					} else {
+						return stateList.stream().filter(n ->
+							n.getPoint().equals(new Point(state.getPoint().x + 1, state.getPoint().y))
+							&& n.getBoxes().equals(state.getBoxes()))
+							.findFirst().orElseThrow();
+					}
 				}
 				case WEST: {
 					if (state.hasBox(state.getWest())) {

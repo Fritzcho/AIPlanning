@@ -36,13 +36,14 @@ public class SokobanBox {
         return new Point(point.x-1, point.y);
     }
 
+    public Point getNorth() {
+        return new Point(point.x, point.y-1);
+    }
+
     public Point getSouth() {
         return new Point(point.x, point.y+1);
     }
 
-    public Point getNorth() {
-        return new Point(point.x, point.y-1);
-    }
 
     public Set<Point> getAdjacent(){
         Set<Point> s = new HashSet<>();
@@ -58,5 +59,13 @@ public class SokobanBox {
 
     public String toString() {
         return "State: ("+(point.x)+","+(point.y)+")";
+    }
+
+    public boolean equals(SokobanBox b){
+        if(b.getPoint().equals(this.point)){
+            return true;
+        }else{
+            return false;
+        }
     }
 }
