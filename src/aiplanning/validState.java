@@ -14,8 +14,13 @@ class validState implements State {
         this.point = p;
     }
 
-    public validState(Point p, Set<SokobanBox> list) {
+    public validState(Point p,Set<SokobanBox> list) {
         this.point = p;
+        this.boxes = list;
+    }
+
+    public validState(Set<SokobanBox> list) {
+        this.point = new Point(0,0);
         this.boxes = list;
     }
 
@@ -23,9 +28,12 @@ class validState implements State {
         return point;
     }
 
-
     public void addBox(SokobanBox b){
         boxes.add(b);
+    }
+
+    public void setBoxes(Set<SokobanBox> b) {
+        this.boxes = b;
     }
 
     public Set<SokobanBox> getBoxes(){
@@ -35,7 +43,6 @@ class validState implements State {
         }
         return b;
     }
-
 
     public SokobanBox getBox(Point p) {
         return boxes.stream().filter(n ->
@@ -85,11 +92,9 @@ class validState implements State {
     }
 
     public boolean equals(validState v){
-        if(v.getPoint().equals(this.point) &&
-                this.boxes.stream().allMatch(b -> v.getBoxes().stream().anyMatch(b2 -> b.getPoint().equals(b2.getPoint())))){
+        if(v.getBoxes().equals(boxes))
             return true;
-        } else{
+        else
             return false;
-        }
     }
 }
