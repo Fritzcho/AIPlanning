@@ -29,11 +29,11 @@ class validState implements State {
     }
 
     public Set<SokobanBox> getBoxes(){
-        Set<SokobanBox> b = new HashSet<>();
-        for(SokobanBox b2 : boxes){
-            b.add(new SokobanBox(b2.getPoint()));
-        }
-        return b;
+            Set<SokobanBox> b = new HashSet<>();
+            for(SokobanBox b2 : boxes){
+                b.add(new SokobanBox(b2.getPoint()));
+            }
+            return b;
     }
 
 
