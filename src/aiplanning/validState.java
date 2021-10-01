@@ -20,7 +20,7 @@ class validState implements State {
     }
 
     public validState(Set<SokobanBox> list) {
-        this.point = new Point(0,0);
+        this.point = new Point(1,1);
         this.boxes = list;
     }
 
@@ -47,8 +47,7 @@ class validState implements State {
     public SokobanBox getBox(Point p) {
         return boxes.stream().filter(n ->
                         n.getPoint().equals(p))
-                        .findFirst()
-                        .orElse(null);
+                        .findFirst().orElseThrow();
     }
 
     public Boolean hasBox(Point p){

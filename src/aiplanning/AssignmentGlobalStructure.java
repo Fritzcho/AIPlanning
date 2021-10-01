@@ -15,7 +15,6 @@ import deterministicplanning.solvers.planningoutcomes.FailedPlanningOutcome;
 import deterministicplanning.solvers.planningoutcomes.PlanningOutcome;
 import deterministicplanning.solvers.planningoutcomes.SuccessfulPlanningOutcome;
 import finitestatemachine.Action;
-import finitestatemachine.State;
 import markov.impl.PairImpl;
 import obstaclemaps.MapDisplayer;
 import obstaclemaps.ObstacleMap;
