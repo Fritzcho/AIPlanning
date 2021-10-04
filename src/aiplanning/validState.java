@@ -23,13 +23,8 @@ class validState implements State {
         return point;
     }
 
-
-    public void addBox(SokobanBox b){
-        boxes.add(b);
-    }
-
-    public Set<SokobanBox> getBoxes(){
-            Set<SokobanBox> b = new HashSet<>();
+    public HashSet<SokobanBox> getBoxes(){
+            HashSet<SokobanBox> b = new HashSet<>();
             for(SokobanBox b2 : boxes){
                 b.add(new SokobanBox(b2.getPoint()));
             }
@@ -38,10 +33,12 @@ class validState implements State {
 
 
     public SokobanBox getBox(Point p) {
-        return boxes.stream().filter(n ->
-                        n.getPoint().equals(p))
-                        .findFirst()
-                        .orElse(null);
+        for(SokobanBox box : boxes){
+            if (box.getPoint().equals(p)){
+                return box;
+            }
+        }
+        return null;
     }
 
     public Boolean hasBox(Point p){
@@ -54,19 +51,19 @@ class validState implements State {
     }
 
     public Point getEast() {
-        return new Point(point.x+1, point.y);
+        return new Point(this.point.x+1, this.point.y);
     }
 
     public Point getWest() {
-        return new Point(point.x-1, point.y);
+        return new Point(this.point.x-1, this.point.y);
     }
 
     public Point getSouth() {
-        return new Point(point.x, point.y+1);
+        return new Point(this.point.x, this.point.y+1);
     }
 
     public Point getNorth() {
-        return new Point(point.x, point.y-1);
+        return new Point(this.point.x, this.point.y-1);
     }
 
     public Set<Point> getAdjacent(){
@@ -85,11 +82,13 @@ class validState implements State {
     }
 
     public boolean equals(validState v){
-        if(v.getPoint().equals(this.point) &&
-                this.boxes.stream().allMatch(b -> v.getBoxes().stream().anyMatch(b2 -> b.getPoint().equals(b2.getPoint())))){
+        /*if(v.getPoint().equals(this.point) &&
+                this.boxes.stream().allMatch(b -> boxes.stream().allMatch(b2 -> b2.getPoint().equals(b.getPoint())))){
             return true;
         } else{
             return false;
-        }
+        }*/
+
+        return v.boxes.equals(boxes);
     }
 }
