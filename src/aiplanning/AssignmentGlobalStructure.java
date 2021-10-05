@@ -76,7 +76,7 @@ public class AssignmentGlobalStructure {
 			wm = generateWorldModel(om, goal);
 
 		} else {
-			wm = generateWorldModel2(om, boxEnds);
+			wm = generateWorldModelSokoban(om, boxEnds);
 			System.out.println(wm.getStates().size());
 		}
 
@@ -219,7 +219,7 @@ public class AssignmentGlobalStructure {
 		}
 	}
 
-	private static WorldModel<validState, Actions> generateWorldModel2(ObstacleMap om, Set<Point> goalPoints) {
+	private static WorldModel<validState, Actions> generateWorldModelSokoban(ObstacleMap om, Set<Point> goalPoints) {
 		LinkedHashSet<validState> potentialStates = new LinkedHashSet<>();
 		Set<SokobanBox> goalBoxes = new LinkedHashSet<>();
 		HashMap<Integer, HashMap<Integer, validState>> statesMap = new LinkedHashMap<>();
@@ -230,11 +230,11 @@ public class AssignmentGlobalStructure {
 		}
 
 		for (SokobanBox sb : goalBoxes){ //Initialize all potential final statesMap
-			int hash = goalBoxes.toString().hashCode();
 			HashMap<Integer, Double> points = new HashMap<>();
 			for(Point pAdjacent : sb.getAdjacent()){
 				if(!om.getObstacles().contains(pAdjacent) && goalPoints.stream().noneMatch(p -> p.equals(pAdjacent))){
 					validState fresh = new validState(pAdjacent, new HashSet<>(goalBoxes));
+					int hash = goalBoxes.toString().hashCode();
 					points.put(fresh.getPoint().toString().hashCode(), 1d);
 
 					if(!statesMap.containsKey(hash)){
@@ -396,6 +396,7 @@ public class AssignmentGlobalStructure {
 	private static WorldModel<validState, Actions> generateWorldModel(ObstacleMap om, Point goal) {
 		validState goalState = new validState(goal);
 		Stack<validState> potentialStates = new Stack<>();
+		potentialStates.addAll(stateList);
 
 		potentialStates.add(goalState);
 
@@ -426,6 +427,11 @@ public class AssignmentGlobalStructure {
 					}
 				}
 			}
+
+			if (possibleActions.isEmpty()) {
+				possibleActions.add(Actions.STILL);
+			}
+
 			return possibleActions;
 		};
 

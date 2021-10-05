@@ -91,4 +91,13 @@ class validState implements State {
 
         return v.boxes.equals(boxes);
     }
+
+    public int boxHashCode(){
+        int hash = 1;
+        for(SokobanBox b : boxes){
+            hash += b.getPoint().x^1000;
+            hash += b.getPoint().y^40;
+        }
+        return hash;
+    }
 }
